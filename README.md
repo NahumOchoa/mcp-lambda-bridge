@@ -35,7 +35,7 @@ MCP-Lambda-Bridge is a high-performance proxy service that optimizes communicati
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/mcp-lambda-bridge.git
+git clone https://github.com/NahumOchoa/mcp-lambda-bridge.git
 cd mcp-lambda-bridge
 
 # Install dependencies
