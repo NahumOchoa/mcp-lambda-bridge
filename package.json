@@ -1,6 +1,6 @@
 {
   "name": "mcp-remote-lambda",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Efficient proxy that connects desktop LLM clients with Lambda functions using standard HTTP instead of HTTP+SSE, reducing API calls and costs while maintaining high performance.",
   "main": "dist/index.js",
   "type": "module",
