@@ -1,24 +1,30 @@
-# MCP-Lambda-Bridge
+# Lambda MCP Bridge
 
-## Efficient Model Context Protocol Bridge for AWS Lambda Functions
+[![npm version](https://img.shields.io/npm/v/mcp-remote-lambda.svg)](https://www.npmjs.com/package/mcp-remote-lambda)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-MCP-Lambda-Bridge is a high-performance proxy service that optimizes communication between desktop LLM clients (like Claude Desktop) and AWS Lambda functions using the Model Context Protocol (MCP). This bridge eliminates the need for HTTP+SSE connections by efficiently batching and routing requests through standard HTTP calls, significantly reducing Lambda invocation frequency and associated costs.
+An efficient proxy that connects desktop LLM clients with Lambda functions using the Model Context Protocol (MCP). This bridge reduces API calls and costs while maintaining high performance by using standard HTTP instead of HTTP+SSE.
 
-## Key Benefits
+*Inspired by [mcp-remote](https://github.com/geelen/mcp-remote)*
 
-- **Optimized API Consumption**: Reduces the number of Lambda invocations by using a single HTTP connection instead of maintaining HTTP+SSE streams
-- **Cost Efficiency**: Minimizes AWS Lambda costs by decreasing the frequency of function calls
-- **Low Latency**: Provides fast tool execution with minimal overhead
-- **Simple Integration**: Works seamlessly with desktop LLM clients like Claude Desktop
+## Why Lambda?
+
+While mcp-remote enables connecting to remote HTTP+SSE servers, mcp-remote-lambda specifically targets AWS Lambda functions. This approach offers several unique benefits:
+
+- **Serverless Architecture**: Deploy your MCP tools without managing infrastructure
+- **Pay-per-use Pricing**: Only pay for actual compute time, not idle servers
+- **Auto-scaling**: Handle varying workloads automatically
+- **Global Availability**: Deploy functions close to your users for lower latency
+- **Easy Versioning**: Update tools without disrupting existing clients
 
 ## Features
 
-- Transparent proxy between MCP-compatible AI clients and AWS Lambda functions
-- Efficient batching and processing of tool requests
-- Standard HTTP communication (no streaming/SSE required)
-- Configurable through environment variables in Claude Desktop configuration
-- Modular architecture with clean separation of concerns
-- Minimal CPU and memory footprint
+- **Simple Connection**: Easily connect your MCP-compatible LLMs to AWS Lambda functions
+- **Reduced Costs**: Optimized communication to minimize API calls
+- **CLI Support**: Run directly from the command line with npx
+- **Flexible Configuration**: Multiple options to customize behavior
+- **Input Interception**: Optional interception of input/output streams
+
 
 ## Architecture
 
@@ -31,59 +37,44 @@ MCP-Lambda-Bridge is a high-performance proxy service that optimizes communicati
        (stdio/IPC)          (Optimized Batch)       (JSON-RPC format)
 ```
 
-## Installation
 
-```bash
-# Clone the repository
-git clone https://github.com/NahumOchoa/mcp-lambda-bridge.git
-cd mcp-lambda-bridge
+## Using with MCP Clients
 
-# Install dependencies
-npm install
+All the most popular MCP clients (Claude Desktop, Cursor & Windsurf) use the following config format:
 
-# Build the application
-npm run build
-```
+### Claude Desktop
 
-## Configuration with Claude Desktop
-
-To use with Claude Desktop, modify the Claude Desktop configuration file:
+Claude Desktop configuration file location:
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
-    "mcpServers": {
-        "lambda_proxy": {
-            "command": "node",
-            "args": ["/path/to/mcp-lambda-bridge/dist/index.js"],
-            "env": {
-                "LAMBDA_API_URL": "https://your-lambda-endpoint.execute-api.region.amazonaws.com/stage",
-                "HTTP_TIMEOUT": "30000",
-                "SERVER_NAME": "Lambda-MCP-Bridge",
-                "SERVER_VERSION": "1.0.0",
-                "SERVER_DESCRIPTION": "Bridge service for Lambda LLM tools"
-            }
-        }
+  "mcpServers": {
+    "lambda-bridge": {
+      "command": "npx",
+      "args": [
+        "mcp-remote-lambda",
+        "https://your-lambda-function.lambda-url.region.on.aws"
+      ],
+      "env": {
+        "HTTP_TIMEOUT": "30000",
+        "SERVER_NAME": "Lambda-MCP-Bridge",
+        "SERVER_VERSION": "1.0.0",
+        "SERVER_DESCRIPTION": "Bridge service that connects AWS Lambda to MCP-compatible LLMs"
+      }
     }
+  }
 }
+
 ```
 
-## Usage
+## Requirements
 
-After configuration, restart Claude Desktop, and the MCP-Lambda-Bridge will automatically start when Claude needs to access tools. The bridge handles communication with your Lambda function efficiently.
-
-## How It Works
-
-1. Claude Desktop spawns the bridge as a child process
-2. The bridge receives tool definitions from your Lambda function
-3. When a tool call is made, the bridge converts it to an optimized HTTP request
-4. Lambda processes the request and returns the result
-5. The bridge formats the response and returns it to Claude
-6. The entire process uses standard HTTP requests instead of maintaining persistent connections
+- Node.js >= 18.0.0
+- An AWS Lambda function that implements the JSON-RPC protocol recommended
+- Successfully tested with Lambda and API Gateway implementation from [serverless-mcp-server](https://github.com/eleva/serverless-mcp-server), which provides a minimal MCP server deployment example
 
 ## License
 
-MIT
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request. 
+MIT 

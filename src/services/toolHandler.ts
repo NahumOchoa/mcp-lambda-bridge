@@ -2,43 +2,45 @@ import { log } from './logger.js';
 import { callJsonRpc } from './rpcClient.js';
 import { toolArgumentsCache } from '../interceptors/inputInterceptor.js';
 
+/**
+ * Handles tool calls and executes them via Lambda
+ * @param toolName Name of the tool to call
+ * @param args Arguments for the tool (already validated by MCP Server)
+ * @returns Tool execution result
+ */
 export async function handleToolCall(toolName: string, args: any) {
-  log(`Tool call '${toolName}'`, args);
-  
-  const cachedArgs = toolArgumentsCache[toolName];
-  log(`Intercepted arguments for ${toolName}`, cachedArgs);
+  log(`Executing tool: ${toolName}`);
   
   try {
-    const argToUse = cachedArgs || args;
+    const finalArgs = toolArgumentsCache[toolName] || args;
     
-    // Convert string numbers to actual numbers if needed
-    if (typeof argToUse.a === 'string') {
-      argToUse.a = Number(argToUse.a);
-    }
-    if (typeof argToUse.b === 'string') {
-      argToUse.b = Number(argToUse.b);
-    }
+    const result = await executeToolOnLambda(toolName, finalArgs);
     
-    const lambdaResponse = await callJsonRpc('tools/call', {
-      name: toolName,
-      arguments: argToUse
-    });
-    
-    delete toolArgumentsCache[toolName];
-    
-    if (lambdaResponse.error) {
-      log(`Error from Lambda for '${toolName}'`, lambdaResponse.error);
-      throw new Error(lambdaResponse.error.message || 'Unknown error from Lambda');
-    }
-    
-    if (lambdaResponse.result) {
-      log(`Successful response for '${toolName}'`, lambdaResponse.result);
-      return lambdaResponse.result;
-    }
-    
-    throw new Error('Response without result or error');
+    return result;
   } catch (error) {
     log(`Error executing tool ${toolName}`, error);
     throw error;
   }
+}
+
+/**
+ * Execute the tool on Lambda and handle response
+ */
+async function executeToolOnLambda(toolName: string, args: any): Promise<any> {
+  const lambdaResponse = await callJsonRpc('tools/call', {
+    name: toolName,
+    arguments: args
+  });
+  
+  delete toolArgumentsCache[toolName];
+  
+  if (lambdaResponse.error) {
+    throw new Error(lambdaResponse.error.message || 'Unknown error from Lambda');
+  }
+  
+  if (lambdaResponse.result) {
+    return lambdaResponse.result;
+  }
+  
+  throw new Error('Response without result or error');
 } 
